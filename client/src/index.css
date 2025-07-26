@@ -1,0 +1,122 @@
+/* index.css */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: #f1f4f9;
+  font-family: 'Segoe UI', sans-serif;
+  color: #444;
+}
+
+.container {
+  max-width: 700px;
+  margin: 60px auto;
+  padding: 0 20px;
+}
+
+h1, h2 {
+  text-align: center;
+  color: #555;
+  font-weight: 600;
+}
+
+h2 {
+  margin-bottom: 40px;
+  font-size: 24px;
+}
+
+/* Header Branding */
+.header {
+  background: white;
+  padding: 20px;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.05);
+  text-align: center;
+}
+
+.logo {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.logo span {
+  background: linear-gradient(90deg, #007cf0, #00dfd8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Select wrapper for custom dropdown arrow */
+.select-wrapper {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto 20px auto;
+}
+
+.select-wrapper::after {
+  content: '▼';
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #1c1b1b;
+  font-size: 14px;
+}
+
+/* Dropdown Styling */
+select {
+  position: relative;
+  z-index: 1;
+  padding: 16px 24px;
+  font-size: 18px;
+  border-radius: 16px;
+  border: 1.5px solid #ccc;
+  width: 100%;
+  color: #555;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  background-color: #fff;
+  transition: all 0.2s ease;
+  appearance: none;
+  cursor: pointer;
+}
+
+/* Hover effect */
+select:hover {
+  border-color: #007cf0;
+  box-shadow: 0 6px 16px rgba(0, 124, 240, 0.15);
+}
+
+select option {
+  padding: 14px;
+  font-size: 16px;
+}
+
+.split-horizontal {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  width: 100%;
+}
+
+.split-horizontal > div {
+  overflow: auto;
+}
+
+.gutter {
+  background-color: #ccc;
+  background-clip: content-box;
+}
+
+.gutter.gutter-horizontal {
+  cursor: col-resize;
+  width: 6px;
+}
+
+.gutter.gutter-vertical {
+  cursor: row-resize;
+  height: 6px;
+}
