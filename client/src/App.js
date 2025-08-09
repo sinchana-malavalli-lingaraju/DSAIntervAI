@@ -3,13 +3,16 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import LandingPage from './components/LandingPage';
 import CompanySelector from './components/CompanySelector';
 import SolvePage from './components/SolvePage';
-import Feedback from './components/Feedback';
+import FinalData from './components/FinalData';
+import FAQPage from './components/FAQPage';
+import InterviewTipsPage from './components/InterviewTipsPage';
+import FeedbackPage from './components/FeedbackPage';
 import './index.css';
 
 // Header component with conditional rendering
 function Header() {
   const location = useLocation();
-  const hideOnSolvePage = location.pathname === '/solve';
+  const hideOnSolvePage = location.pathname === '/' || location.pathname === '/solve';
 
   return !hideOnSolvePage ? (
     <header className="header">
@@ -38,7 +41,10 @@ function App() {
           }
         />
         <Route path="/solve" element={<SolvePage />} />
-        <Route path="/feedback" element={<Feedback />} />
+        <Route path="/final-data" element={<FinalData />} />
+        <Route path="/faq" element={<FAQPage />} />
+        <Route path="/interview-tips" element={<InterviewTipsPage />} />
+        <Route path="/feedback" element={<FeedbackPage />} />
       </Routes>
     </Router>
   );
