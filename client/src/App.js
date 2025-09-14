@@ -4,6 +4,7 @@ import LandingPage from './components/LandingPage';
 import CompanySelector from './components/CompanySelector';
 import SolvePage from './components/SolvePage';
 import FinalData from './components/FinalData';
+import ScoreCard from './components/ScoreCard';
 import FAQPage from './components/FAQPage';
 import InterviewTipsPage from './components/InterviewTipsPage';
 import FeedbackPage from './components/FeedbackPage';
@@ -42,6 +43,7 @@ function App() {
         />
         <Route path="/solve" element={<SolvePage />} />
         <Route path="/final-data" element={<FinalData />} />
+        <Route path="/scorecard" element={<ScoreCard />} />
         <Route path="/faq" element={<FAQPage />} />
         <Route path="/interview-tips" element={<InterviewTipsPage />} />
         <Route path="/feedback" element={<FeedbackPage />} />
