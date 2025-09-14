@@ -9,37 +9,118 @@ const DURATIONS = [
   { label: "1 hour", value: 60 * 60 },
 ];
 
+// Move StepCard component outside to prevent re-creation on every render
+const StepCard = ({ title, children, hint, onNext, onBack, showMic, bindSetter, isListening, speechSupported, onMicClick }) => (
+  <div
+    style={{
+      background: "#fff",
+      borderRadius: 12,
+      padding: 20,
+      boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
+      width: "100%",
+      boxSizing: "border-box",
+    }}
+  >
+    <button
+      onClick={onBack}
+      disabled={!onBack}
+      style={{
+        margin: "0 0 15px",
+        border: "none",
+        background: "#fff",
+        cursor: onBack ? "pointer" : "not-allowed",
+        opacity: onBack ? 1 : 0.6,
+        display: "flex",
+        alignItems: "center",
+      }}
+    >
+      <FiArrowLeft />
+    </button>
+    <h3 style={{ margin: "0 0 10px", color: "#111" }}>{title}</h3>
+    {hint && (
+      <p style={{ margin: "0 0 14px", color: "#666", fontSize: 14 }}>{hint}</p>
+    )}
+    <div style={{ marginBottom: 12 }}>{children}</div>
+    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8 }}>
+      {showMic && (
+        <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 10 }}>
+          <button
+            onClick={onMicClick}
+            style={{
+              padding: "10px",
+              borderRadius: 10,
+              border: "none",
+              background: isListening ? "#ff4d4f" : "#00c853",
+              color: "#fff",
+              cursor: "pointer",
+              fontSize: 15,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 4px 10px rgba(0,0,0,0.15)"
+            }}
+          >
+            {isListening ? <FiSquare /> : <FiMic />}
+          </button>
+          <span style={{ fontSize: 14, color: "#444", fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>
+            {speechSupported ? (
+              <>
+                <FiCheckCircle color={isListening ? "#ff4d4f" : "#00c853"} />
+                {isListening ? "Listening…" : "Mic ready"}
+              </>
+            ) : (
+              "Speech not supported, please type instead"
+            )}
+          </span>
+        </div>
+      )}
+      <button
+        onClick={onNext}
+        style={{
+          padding: "4px 20px",
+          borderRadius: 10,
+          border: "none",
+          background: "linear-gradient(to right, #007cf0, #00dfd8)",
+          color: "#fff",
+          cursor: "pointer",
+          fontWeight: 600,
+          fontSize: "13px",
+        }}
+      >
+        Continue
+      </button>
+    </div>
+  </div>
+);
+
 function SolvePage() {
   const navigate = useNavigate();
-
   // Question + layout
   const [questionData, setQuestionData] = useState(null);
   const [showGuide, setShowGuide] = useState(
     () => sessionStorage.getItem("hideSolveGuide") !== "1"
   );
-
   // Flow state
   const [step, setStep] = useState("timer"); // "timer" | "edge" | "brute" | "optim" | "code" | "complexity"
   const [selectedDuration, setSelectedDuration] = useState(null);
+  const [timerStarted, setTimerStarted] = useState(false); // NEW: Control when timer actually starts
   const [remaining, setRemaining] = useState(0);
-
   // Voice/text inputs per step
   const [edgeCases, setEdgeCases] = useState("");
   const [bruteForce, setBruteForce] = useState("");
   const [optimized, setOptimized] = useState("");
-
   // Code + complexity
   const [userCode, setUserCode] = useState("");
   const [timeComplexity, setTimeComplexity] = useState("");
   const [spaceComplexity, setSpaceComplexity] = useState("");
-
   // Speech recognition
   const [speechSupported, setSpeechSupported] = useState(true);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef(null);
   const interimRef = useRef("");
   const targetSetterRef = useRef(null);
-
+  const lastResultIndexRef = useRef(0); // Track last processed result index
+  
   // Mount: fetch question, check speech support
   useEffect(() => {
     const link = localStorage.getItem("leetcodeLink");
@@ -51,16 +132,18 @@ function SolvePage() {
         .then((data) => setQuestionData(data))
         .catch(() => setQuestionData(null));
     }
-
     if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
       setSpeechSupported(false);
     }
   }, []);
-
-  // Timer tick only after a duration is selected
+  
+  // Timer tick only after Continue is pressed
   useEffect(() => {
-    if (!selectedDuration) return;
+    if (!timerStarted || !selectedDuration) return;
+    
+    // Initialize remaining time when timer starts
     setRemaining(selectedDuration);
+    
     const t = setInterval(() => {
       setRemaining((prev) => {
         if (prev <= 1) {
@@ -71,44 +154,57 @@ function SolvePage() {
         return prev - 1;
       });
     }, 1000);
+    
     return () => clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDuration]);
-
+  }, [timerStarted, selectedDuration]);
+  
   // Speech helpers
   const startListening = (setter) => {
     if (!speechSupported) return;
     stopListening();
     targetSetterRef.current = setter;
-
+    lastResultIndexRef.current = 0; // Reset the result index tracker
+    
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) return;
+    
     const recognition = new SR();
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = "en-US";
-
+    
     recognition.onstart = () => setIsListening(true);
     recognition.onerror = () => setIsListening(false);
     recognition.onend = () => setIsListening(false);
+    
     recognition.onresult = (event) => {
       let interim = "";
       let finalAdd = "";
-      for (let i = 0; i < event.results.length; i++) {
-        const t = event.results[i][0].transcript;
-        if (event.results[i].isFinal) finalAdd += t + " ";
-        else interim += t;
+      
+      // Only process NEW results since the last processed index
+      for (let i = lastResultIndexRef.current; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalAdd += transcript + " ";
+          lastResultIndexRef.current = i + 1; // Update the last processed index
+        } else {
+          interim += transcript;
+        }
       }
+      
+      // Add final results to the text field
       if (finalAdd && targetSetterRef.current) {
         targetSetterRef.current((prev) => (prev ? prev + " " : "") + finalAdd.trim());
       }
+      
       interimRef.current = interim;
     };
-
+    
     recognitionRef.current = recognition;
     recognition.start();
   };
-
+  
   const stopListening = () => {
     if (recognitionRef.current) {
       recognitionRef.current.onresult = null;
@@ -120,22 +216,23 @@ function SolvePage() {
       recognitionRef.current = null;
     }
     setIsListening(false);
+    lastResultIndexRef.current = 0; // Reset the index when stopping
   };
-
+  
   // Format time
   const fmt = (s) => {
     const m = Math.floor(s / 60).toString().padStart(2, "0");
     const ss = (s % 60).toString().padStart(2, "0");
     return `${m}:${ss}`;
   };
-
+  
   // Clean question HTML (remove images & follow-ups)
   const stripFollowUp = (html) => html?.split(/<strong>Follow-up:/i)[0];
   const cleanedHTML = stripFollowUp(questionData?.descriptionHTML)?.replace(
     /<img[^>]*>/g,
     ""
   );
-
+  
   // Textarea Tab support
   const handleCodeKeyDown = (e) => {
     if (e.key === "Tab") {
@@ -151,102 +248,12 @@ function SolvePage() {
       });
     }
   };
-
+  
   const dismissGuide = () => {
     sessionStorage.setItem("hideSolveGuide", "1");
     setShowGuide(false);
   };
-
-  // Step card (no animations)
-  const StepCard = ({ title, children, hint, onNext, onBack, showMic, bindSetter }) => (
-    <div
-      style={{
-        background: "#fff",
-        borderRadius: 12,
-        padding: 20,
-        boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
-        width: "100%",
-        boxSizing: "border-box",
-      }}
-    >
-        <button
-  onClick={onBack}
-  disabled={!onBack}
-  style={{
-    margin: "0 0 15px",
-    border: "none",
-    background: "#fff",
-    cursor: onBack ? "pointer" : "not-allowed",
-    opacity: onBack ? 1 : 0.6,
-    display: "flex",
-    alignItems: "center",
-  }}
->
-  <FiArrowLeft />
-</button>
-      <h3 style={{ margin: "0 0 10px", color: "#111" }}>{title}</h3>
-      {hint && (
-        <p style={{ margin: "0 0 14px", color: "#666", fontSize: 14 }}>{hint}</p>
-      )}
-      <div style={{ marginBottom: 12 }}>{children}</div>
-
-
-
-
-
-      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8 }}>
-      {showMic && (
-  <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 10 }}>
-    <button
-      onClick={() => (isListening ? stopListening() : startListening(bindSetter))}
-      style={{
-        padding: "10px",
-        borderRadius: 10,
-        border: "none",
-        background: isListening ? "#ff4d4f" : "#00c853",
-        color: "#fff",
-        cursor: "pointer",
-        fontSize: 15,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        boxShadow: "0 4px 10px rgba(0,0,0,0.15)"
-      }}
-    >
-      {isListening ? <FiSquare /> : <FiMic />}
-    </button>
-    <span style={{ fontSize: 14, color: "#444", fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>
-      {speechSupported ? (
-        <>
-          <FiCheckCircle color={isListening ? "#ff4d4f" : "#00c853"} />
-          {isListening ? "Listening…" : "Mic ready"}
-        </>
-      ) : (
-        "Speech not supported, please type instead"
-      )}
-    </span>
-  </div>
-)}
-
-       <button
-  onClick={onNext}
-  style={{
-    padding: "4px 20px",  
-    borderRadius: 10,      
-    border: "none",
-    background: "linear-gradient(to right, #007cf0, #00dfd8)",
-    color: "#fff",
-    cursor: "pointer",
-    fontWeight: 600,      
-    fontSize: "13px",     
-  }}
->
-  Continue
-</button>
-      </div>
-    </div>
-  );
-
+  
   // Right panel per step (after timer)
   const renderRight = () => {
     switch (step) {
@@ -254,10 +261,13 @@ function SolvePage() {
         return (
           <StepCard
             title="Record Edge Cases"
-            hint="Speak or type edge cases you’ll consider before coding."
+            hint="Speak or type edge cases you'll consider before coding."
             onNext={() => { stopListening(); setStep("brute"); }}
             showMic
             bindSetter={setEdgeCases}
+            isListening={isListening}
+            speechSupported={speechSupported}
+            onMicClick={() => (isListening ? stopListening() : startListening(setEdgeCases))}
           >
             <textarea
               value={edgeCases}
@@ -284,6 +294,9 @@ function SolvePage() {
             onBack={() => { stopListening(); setStep("edge"); }}
             showMic
             bindSetter={setBruteForce}
+            isListening={isListening}
+            speechSupported={speechSupported}
+            onMicClick={() => (isListening ? stopListening() : startListening(setBruteForce))}
           >
             <textarea
               value={bruteForce}
@@ -305,11 +318,14 @@ function SolvePage() {
         return (
           <StepCard
             title="Record Optimized Solution + Data Structure"
-            hint="Explain your optimized idea, which DS/algorithm you’ll use, and why."
+            hint="Explain your optimized idea, which DS/algorithm you'll use, and why."
             onNext={() => { stopListening(); setStep("code"); }}
             onBack={() => { stopListening(); setStep("brute"); }}
             showMic
             bindSetter={setOptimized}
+            isListening={isListening}
+            speechSupported={speechSupported}
+            onMicClick={() => (isListening ? stopListening() : startListening(setOptimized))}
           >
             <textarea
               value={optimized}
@@ -329,13 +345,13 @@ function SolvePage() {
         );
       case "code":
         return (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 0 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 0 }}>
-                 <h3 style={{ margin: "0 0 10px", color: "#111" }}>Code</h3>
-              <div style={{ fontSize: 13, color: "#666" }}>
-                You can now type your optimized solution. <span style={{ color: "#007cf0" }}>Tab</span> inserts spaces.
-              </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, height: "100%" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <h3 style={{ margin: "0 0 10px", color: "#111" }}>Code</h3>
+                <div style={{ fontSize: 13, color: "#666" }}>
+                  You can now type your optimized solution. <span style={{ color: "#007cf0" }}>Tab</span> inserts spaces.
+                </div>
               </div>
               <button
                 onClick={() => setStep("complexity")}
@@ -352,7 +368,7 @@ function SolvePage() {
                 Submit
               </button>
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
               <textarea
                 value={userCode}
                 onChange={(e) => setUserCode(e.target.value)}
@@ -360,7 +376,7 @@ function SolvePage() {
                 placeholder="// Type your optimized code here…"
                 style={{
                   width: "100%",
-                  height: "60vh",
+                  flex: 1,
                   borderRadius: 8,
                   border: "1px solid #ccc",
                   padding: 10,
@@ -368,10 +384,11 @@ function SolvePage() {
                   fontSize: 14,
                   whiteSpace: "pre-wrap",
                   boxSizing: "border-box",
+                  resize: "none",
                 }}
               />
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", flexShrink: 0 }}>
               <button
                 onClick={() => setStep("optim")}
                 style={{
@@ -425,23 +442,31 @@ function SolvePage() {
         return null;
     }
   };
-
+  
   const isTimerBlocking = step === "timer";
-
+  
   return (
     <div
       style={{
         height: "100vh",
         width: "100vw",
-        display: "grid",
-        gridTemplateRows: "auto 1fr",
+        display: "flex",
+        flexDirection: "column",
         overflow: "hidden",
         fontFamily: "Segoe UI, sans-serif",
         position: "relative",
       }}
     >
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 24px", background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+      <div style={{ 
+        display: "flex", 
+        justifyContent: "space-between", 
+        alignItems: "center", 
+        padding: "12px 24px", 
+        background: "#fff", 
+        boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
+        flexShrink: 0
+      }}>
         <h1 style={{ margin: 0, fontSize: "22px" }}>
           <span style={{ fontWeight: 600 }}>DSA</span>
           <span style={{ background: "linear-gradient(90deg,#007cf0,#00dfd8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
@@ -450,38 +475,67 @@ function SolvePage() {
         </h1>
         <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 13 }}>
           <div style={{ padding: "4px 8px", borderRadius: 14, background: "#f5f7fb", border: "1px solid #e6e9f2" }}>
-            {selectedDuration ? `⏱ ${fmt(remaining)} remaining` : "⏱ Select a timer to begin"}
+            {timerStarted ? `⏱ ${fmt(remaining)} remaining` : "⏱ Select a timer to begin"}
           </div>
         </div>
       </div>
-
+      
       {/* Content (dim & disable while timer overlay is up) */}
-      <div style={{ minHeight: 0, position: "relative" }}>
+      <div style={{ 
+        flex: 1, 
+        position: "relative", 
+        display: "flex", 
+        flexDirection: "column",
+        minHeight: 0 
+      }}>
         <div
           style={{
-            padding: 20,
-            overflow: "auto",
-            background: "#fff",
-            minHeight: 0,
-            minWidth: 0,
-            opacity: step === isTimerBlocking ? 0.3 : 1,            // fade effect
-            filter: step === isTimerBlocking ? "blur(2px)" : "none", // slight blur
-            pointerEvents: step === isTimerBlocking ? "none" : "auto", // disable interaction while faded
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            opacity: isTimerBlocking ? 0.3 : 1,            // fade effect
+            filter: isTimerBlocking ? "blur(2px)" : "none", // slight blur
+            pointerEvents: isTimerBlocking ? "none" : "auto", // disable interaction while faded
             transition: "opacity 0.3s ease, filter 0.3s ease",
+            minHeight: 0,
           }}
         >
-          <Split className="split-horizontal" style={{ height: "100%", display: "flex", minHeight: 0, minWidth: 0 }} gutterSize={8}>
+          <Split 
+            className="split-horizontal" 
+            style={{ 
+              height: "100%", 
+              display: "flex",
+              flex: 1,
+              minHeight: 0 
+            }} 
+            gutterSize={8}
+            sizes={[50, 50]}
+          >
             {/* Left: Question */}
-            <div style={{ padding: 20, overflow: "auto", background: "#fff", minHeight: 0, minWidth: 0 }}>
+            <div style={{ 
+              padding: 20, 
+              overflow: "auto", 
+              background: "#fff",
+              height: "100%",
+              boxSizing: "border-box"
+            }}>
               {questionData ? (
                 <div dangerouslySetInnerHTML={{ __html: cleanedHTML }} />
               ) : (
                 <p>Loading question…</p>
               )}
             </div>
-
+            
             {/* Right: Guided panel */}
-            <div style={{ padding: 20, background: "#f7f9fc", overflow: "auto", minHeight: 0, minWidth: 0 }}>
+            <div style={{ 
+              padding: 20, 
+              background: "#f7f9fc", 
+              overflow: "auto",
+              height: "100%",
+              boxSizing: "border-box",
+              display: "flex",
+              flexDirection: "column"
+            }}>
               {showGuide && (
                 <div
                   style={{
@@ -491,6 +545,7 @@ function SolvePage() {
                     padding: 14,
                     marginBottom: 14,
                     boxShadow: "0 2px 10px rgba(0,0,0,0.04)",
+                    flexShrink: 0
                   }}
                 >
                   <b>How to use this page</b>
@@ -507,12 +562,13 @@ function SolvePage() {
                   </div>
                 </div>
               )}
-
-              {renderRight()}
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+                {renderRight()}
+              </div>
             </div>
           </Split>
         </div>
-
+        
         {/* TIMER OVERLAY */}
         {isTimerBlocking && (
           <div
@@ -537,9 +593,8 @@ function SolvePage() {
             >
               <h2 style={{ marginTop: 0, marginBottom: 6 }}>Select Your Timer</h2>
               <p style={{ marginTop: 0, color: "#666" }}>
-                Pick a duration that matches the company’s interview format. You’re in control.
+                Pick a duration that matches the company's interview format. You're in control.
               </p>
-
               <div style={{ display: "flex", gap: 12, flexWrap: "wrap", margin: "14px 0 8px" }}>
                 {DURATIONS.map((d) => (
                   <button
@@ -558,23 +613,31 @@ function SolvePage() {
                   </button>
                 ))}
               </div>
-
               <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16 }}>
                 <button
-                  disabled
+                  onClick={() => navigate("/select-company")}
                   style={{
                     padding: "8px 12px",
                     borderRadius: 6,
                     border: "1px solid #ddd",
                     background: "#fff",
-                    opacity: 0.6,
-                    cursor: "not-allowed",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
                   }}
                 >
+                  <FiArrowLeft size={14} />
                   Back
                 </button>
                 <button
-                  onClick={() => selectedDuration && setStep("edge")}
+                  onClick={() => {
+                    if (selectedDuration) {
+                      console.log("Continue clicked - starting timer");
+                      setTimerStarted(true);
+                      setStep("edge");
+                    }
+                  }}
                   disabled={!selectedDuration}
                   style={{
                     padding: "10px 16px",
@@ -591,14 +654,13 @@ function SolvePage() {
                   Continue
                 </button>
               </div>
-
               {!selectedDuration ? (
                 <p style={{ marginTop: 10, fontSize: 13, color: "#999" }}>
                   Please select a duration to continue.
                 </p>
               ) : (
                 <p style={{ marginTop: 10, fontSize: 13, color: "#333" }}>
-                  Timer set to <b>{fmt(selectedDuration)}</b>. You can start speaking in the next step.
+                  Timer set to <b>{fmt(selectedDuration)}</b>. Timer will start when you press Continue.
                 </p>
               )}
             </div>
