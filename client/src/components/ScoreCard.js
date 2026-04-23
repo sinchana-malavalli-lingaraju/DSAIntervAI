@@ -72,16 +72,10 @@ function ScoreCard() {
   const overallScore = Math.round(evaluation.scores.reduce((sum, item) => sum + item.score, 0) / evaluation.scores.length);
 
   return (
-    <div className="container">
+    <div className="container" style={{ paddingBottom: '40px' }}>
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: 40 }}>
-        <h1 style={{ marginBottom: 10 }}>
-          <span style={{ fontWeight: 600 }}>DSA</span>
-          <span style={{ background: "linear-gradient(90deg,#007cf0,#00dfd8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-            IntervAI
-          </span>
-        </h1>
-        <h2 style={{ color: '#555', fontWeight: 500 }}>AI Evaluation Results</h2>
+        <h1 style={{ color: 'white', fontWeight: 700, marginBottom: 0 }}>Report</h1>
       </div>
 
       {/* Overall Score */}
@@ -104,15 +98,16 @@ function ScoreCard() {
 
       {/* Detailed Scores */}
       <div style={{ marginBottom: 30 }}>
-        <h3 style={{ marginBottom: 20, color: '#555' }}>Detailed Analysis</h3>
+        <h3 style={{ marginBottom: 20, color: 'var(--text-primary)', transition: 'var(--transition-normal)' }}>Detailed Analysis</h3>
         {evaluation.scores.map((item, index) => (
           <div key={index} style={{
-            background: 'white',
-            border: '1px solid #e0e0e0',
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border-secondary)',
             borderRadius: 10,
             padding: 20,
             marginBottom: 15,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+            boxShadow: '0 2px 8px var(--shadow-light)',
+            transition: 'var(--transition-normal)'
           }}>
             <div style={{ 
               display: 'flex', 
@@ -125,7 +120,9 @@ function ScoreCard() {
                 alignItems: 'center', 
                 gap: 10,
                 fontWeight: 600,
-                fontSize: 16
+                fontSize: 16,
+                color: 'var(--text-primary)',
+                transition: 'var(--transition-normal)'
               }}>
                 {getScoreIcon(item.score)}
                 {item.category}
@@ -139,9 +136,10 @@ function ScoreCard() {
               </div>
             </div>
             <div style={{ 
-              color: '#666', 
+              color: 'var(--text-secondary)', 
               lineHeight: 1.5,
-              fontSize: 14 
+              fontSize: 14,
+              transition: 'var(--transition-normal)'
             }}>
               {item.feedback}
             </div>
@@ -152,14 +150,15 @@ function ScoreCard() {
       {/* AI General Feedback */}
       {evaluation.generalFeedback && (
         <div style={{ marginBottom: 30 }}>
-          <h3 style={{ marginBottom: 15, color: '#555' }}>Overall Feedback</h3>
+          <h3 style={{ marginBottom: 15, color: 'var(--text-primary)', transition: 'var(--transition-normal)' }}>Overall Feedback</h3>
           <div style={{
-            background: '#f8f9fa',
-            border: '1px solid #e9ecef',
+            background: 'var(--bg-tertiary)',
+            border: '1px solid var(--border-secondary)',
             borderRadius: 10,
             padding: 20,
-            color: '#444',
-            lineHeight: 1.6
+            color: 'var(--text-secondary)',
+            lineHeight: 1.6,
+            transition: 'var(--transition-normal)'
           }}>
             {evaluation.generalFeedback}
           </div>
@@ -171,21 +170,23 @@ function ScoreCard() {
         display: 'flex', 
         justifyContent: 'center', 
         gap: 15,
-        marginTop: 40 
+        marginTop: 40,
+        marginBottom: 40
       }}>
         <button
           onClick={() => navigate('/')}
           style={{
             padding: '12px 24px',
             borderRadius: 8,
-            border: '1px solid #ddd',
-            background: '#fff',
-            color: '#555',
+            border: '1px solid var(--border-tertiary)',
+            background: 'var(--bg-secondary)',
+            color: 'var(--text-secondary)',
             cursor: 'pointer',
             fontWeight: 500,
             display: 'flex',
             alignItems: 'center',
-            gap: 8
+            gap: 8,
+            transition: 'var(--transition-fast)'
           }}
         >
           <FiHome size={16} />
@@ -198,13 +199,14 @@ function ScoreCard() {
             padding: '12px 24px',
             borderRadius: 8,
             border: 'none',
-            background: 'linear-gradient(to right, #007cf0, #00dfd8)',
+            background: 'var(--accent-gradient)',
             color: '#fff',
             cursor: 'pointer',
             fontWeight: 600,
             display: 'flex',
             alignItems: 'center',
-            gap: 8
+            gap: 8,
+            transition: 'var(--transition-fast)'
           }}
         >
           <FiRefreshCw size={16} />

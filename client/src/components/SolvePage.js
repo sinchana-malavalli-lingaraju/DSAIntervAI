@@ -2,6 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import Split from "react-split";
 import { useNavigate } from "react-router-dom";
 import { FiMic, FiSquare, FiArrowLeft, FiCheckCircle } from "react-icons/fi";
+import DarkModeToggle from "./DarkModeToggle";
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
 const DURATIONS = [
   { label: "30 min", value: 30 * 60 },
@@ -12,11 +15,8 @@ const DURATIONS = [
 // Move StepCard component outside to prevent re-creation on every render
 const StepCard = ({ title, children, hint, onNext, onBack, showMic, bindSetter, isListening, speechSupported, onMicClick }) => (
   <div
+    className="theme-card"
     style={{
-      background: "#fff",
-      borderRadius: 12,
-      padding: 20,
-      boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
       width: "100%",
       boxSizing: "border-box",
     }}
@@ -27,18 +27,20 @@ const StepCard = ({ title, children, hint, onNext, onBack, showMic, bindSetter, 
       style={{
         margin: "0 0 15px",
         border: "none",
-        background: "#fff",
+        background: "none",
         cursor: onBack ? "pointer" : "not-allowed",
         opacity: onBack ? 1 : 0.6,
         display: "flex",
         alignItems: "center",
+        color: "var(--text-secondary)",
+        transition: "var(--transition-fast)",
       }}
     >
       <FiArrowLeft />
     </button>
-    <h3 style={{ margin: "0 0 10px", color: "#111" }}>{title}</h3>
+    <h3 style={{ margin: "0 0 10px", color: "var(--text-primary)", transition: "var(--transition-normal)" }}>{title}</h3>
     {hint && (
-      <p style={{ margin: "0 0 14px", color: "#666", fontSize: 14 }}>{hint}</p>
+      <p style={{ margin: "0 0 14px", color: "var(--text-tertiary)", fontSize: 14, transition: "var(--transition-normal)" }}>{hint}</p>
     )}
     <div style={{ marginBottom: 12 }}>{children}</div>
     <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8 }}>
@@ -50,22 +52,23 @@ const StepCard = ({ title, children, hint, onNext, onBack, showMic, bindSetter, 
               padding: "10px",
               borderRadius: 10,
               border: "none",
-              background: isListening ? "#ff4d4f" : "#00c853",
+              background: isListening ? "var(--error)" : "var(--accent-primary)",
               color: "#fff",
               cursor: "pointer",
               fontSize: 15,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              boxShadow: "0 4px 10px rgba(0,0,0,0.15)"
+              boxShadow: "0 4px 10px var(--shadow-medium)",
+              transition: "var(--transition-fast)"
             }}
           >
             {isListening ? <FiSquare /> : <FiMic />}
           </button>
-          <span style={{ fontSize: 14, color: "#444", fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 14, color: "var(--text-secondary)", fontWeight: 500, display: "flex", alignItems: "center", gap: 6, transition: "var(--transition-normal)" }}>
             {speechSupported ? (
               <>
-                <FiCheckCircle color={isListening ? "#ff4d4f" : "#00c853"} />
+                <FiCheckCircle color={isListening ? "var(--error)" : "var(--accent-primary)"} />
                 {isListening ? "Listening…" : "Mic ready"}
               </>
             ) : (
@@ -76,15 +79,11 @@ const StepCard = ({ title, children, hint, onNext, onBack, showMic, bindSetter, 
       )}
       <button
         onClick={onNext}
+        className="theme-button"
         style={{
-          padding: "4px 20px",
-          borderRadius: 10,
-          border: "none",
-          background: "linear-gradient(to right, #007cf0, #00dfd8)",
-          color: "#fff",
-          cursor: "pointer",
-          fontWeight: 600,
-          fontSize: "13px",
+          padding: "8px 24px",
+          fontSize: "15px",
+          fontWeight: "600",
         }}
       >
         Continue
@@ -126,7 +125,7 @@ function SolvePage() {
     const link = localStorage.getItem("leetcodeLink");
     if (link) {
       fetch(
-        `http://localhost:3001/leetcode-data?url=${encodeURIComponent(link)}`
+        `${API_URL}/leetcode-data?url=${encodeURIComponent(link)}`
       )
         .then((r) => r.json())
         .then((data) => setQuestionData(data))
@@ -273,14 +272,10 @@ function SolvePage() {
               value={edgeCases}
               onChange={(e) => setEdgeCases(e.target.value)}
               placeholder="e.g., empty input, duplicates, negative values, large inputs, single element…"
+              className="theme-textarea"
               style={{
                 width: "100%",
                 minHeight: 140,
-                borderRadius: 8,
-                border: "1px solid #ccc",
-                padding: 10,
-                fontFamily: "monospace",
-                fontSize: 14,
               }}
             />
           </StepCard>
@@ -302,14 +297,10 @@ function SolvePage() {
               value={bruteForce}
               onChange={(e) => setBruteForce(e.target.value)}
               placeholder="Describe the brute force logic step-by-step…"
+              className="theme-textarea"
               style={{
                 width: "100%",
                 minHeight: 140,
-                borderRadius: 8,
-                border: "1px solid #ccc",
-                padding: 10,
-                fontFamily: "monospace",
-                fontSize: 14,
               }}
             />
           </StepCard>
@@ -331,14 +322,10 @@ function SolvePage() {
               value={optimized}
               onChange={(e) => setOptimized(e.target.value)}
               placeholder="e.g., Use a hash map to reduce lookups to O(1). Choose a heap to track top-k…"
+              className="theme-textarea"
               style={{
                 width: "100%",
                 minHeight: 160,
-                borderRadius: 8,
-                border: "1px solid #ccc",
-                padding: 10,
-                fontFamily: "monospace",
-                fontSize: 14,
               }}
             />
           </StepCard>
@@ -348,21 +335,16 @@ function SolvePage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 8, height: "100%" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <h3 style={{ margin: "0 0 10px", color: "#111" }}>Code</h3>
-                <div style={{ fontSize: 13, color: "#666" }}>
-                  You can now type your optimized solution. <span style={{ color: "#007cf0" }}>Tab</span> inserts spaces.
+                <h3 style={{ margin: "0 0 10px", color: "var(--text-primary)", transition: "var(--transition-normal)" }}>Code</h3>
+                <div style={{ fontSize: 13, color: "var(--text-tertiary)", transition: "var(--transition-normal)" }}>
+                  You can now type your optimized solution. <span style={{ color: "var(--accent-primary)" }}>Tab</span> inserts spaces.
                 </div>
               </div>
               <button
                 onClick={() => setStep("complexity")}
+                className="theme-button"
                 style={{
                   padding: "8px 14px",
-                  borderRadius: 8,
-                  border: "none",
-                  background: "linear-gradient(to right, #007cf0, #00dfd8)",
-                  color: "#fff",
-                  fontWeight: 600,
-                  cursor: "pointer",
                 }}
               >
                 Submit
@@ -374,14 +356,10 @@ function SolvePage() {
                 onChange={(e) => setUserCode(e.target.value)}
                 onKeyDown={handleCodeKeyDown}
                 placeholder="// Type your optimized code here…"
+                className="theme-textarea"
                 style={{
                   width: "100%",
                   flex: 1,
-                  borderRadius: 8,
-                  border: "1px solid #ccc",
-                  padding: 10,
-                  fontFamily: "monospace",
-                  fontSize: 14,
                   whiteSpace: "pre-wrap",
                   boxSizing: "border-box",
                   resize: "none",
@@ -394,9 +372,11 @@ function SolvePage() {
                 style={{
                   padding: "8px 12px",
                   borderRadius: 6,
-                  border: "1px solid #ddd",
-                  background: "#fff",
+                  border: "1px solid var(--border-tertiary)",
+                  background: "var(--bg-secondary)",
                   cursor: "pointer",
+                  color: "var(--text-secondary)",
+                  transition: "var(--transition-fast)",
                 }}
               >
                 Back
@@ -420,20 +400,22 @@ function SolvePage() {
             }}
             onBack={() => setStep("code")}
           >
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, maxWidth: "400px", margin: "0 0 24px 0" }}>
               <input
                 type="text"
                 value={timeComplexity}
                 onChange={(e) => setTimeComplexity(e.target.value)}
                 placeholder="Time Complexity (e.g., O(n log n))"
-                style={{ padding: 10, borderRadius: 8, border: "1px solid #ccc" }}
+                className="theme-input"
+                style={{ fontSize: "14px", padding: "8px 12px" }}
               />
               <input
                 type="text"
                 value={spaceComplexity}
                 onChange={(e) => setSpaceComplexity(e.target.value)}
                 placeholder="Space Complexity (e.g., O(1))"
-                style={{ padding: 10, borderRadius: 8, border: "1px solid #ccc" }}
+                className="theme-input"
+                style={{ fontSize: "14px", padding: "8px 12px" }}
               />
             </div>
           </StepCard>
@@ -455,6 +437,9 @@ function SolvePage() {
         overflow: "hidden",
         fontFamily: "Segoe UI, sans-serif",
         position: "relative",
+        backgroundColor: "var(--bg-primary)",
+        color: "var(--text-secondary)",
+        transition: "var(--transition-normal)",
       }}
     >
       {/* Header */}
@@ -463,18 +448,29 @@ function SolvePage() {
         justifyContent: "space-between", 
         alignItems: "center", 
         padding: "12px 24px", 
-        background: "#fff", 
-        boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-        flexShrink: 0
+        background: "var(--bg-secondary)", 
+        boxShadow: "0 1px 4px var(--shadow-light)",
+        flexShrink: 0,
+        transition: "var(--transition-normal)"
       }}>
-        <h1 style={{ margin: 0, fontSize: "22px" }}>
+        <h1 style={{ margin: 0, fontSize: "22px", color: "var(--text-primary)", transition: "var(--transition-normal)" }}>
           <span style={{ fontWeight: 600 }}>DSA</span>
-          <span style={{ background: "linear-gradient(90deg,#007cf0,#00dfd8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+          <span style={{ background: "var(--accent-gradient)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
             IntervAI
           </span>
         </h1>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 13 }}>
-          <div style={{ padding: "4px 8px", borderRadius: 14, background: "#f5f7fb", border: "1px solid #e6e9f2" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 13 }}>
+          <DarkModeToggle size={20} />
+          <div style={{ 
+            padding: "6px 12px", 
+            borderRadius: 14, 
+            background: "var(--bg-tertiary)", 
+            border: "1px solid var(--border-secondary)", 
+            color: "var(--text-secondary)", 
+            transition: "var(--transition-normal)",
+            whiteSpace: "nowrap",
+            minWidth: "fit-content"
+          }}>
             {timerStarted ? `⏱ ${fmt(remaining)} remaining` : "⏱ Select a timer to begin"}
           </div>
         </div>
@@ -515,9 +511,11 @@ function SolvePage() {
             <div style={{ 
               padding: 20, 
               overflow: "auto", 
-              background: "#fff",
+              background: "var(--bg-secondary)",
               height: "100%",
-              boxSizing: "border-box"
+              boxSizing: "border-box",
+              color: "var(--text-secondary)",
+              transition: "var(--transition-normal)"
             }}>
               {questionData ? (
                 <div dangerouslySetInnerHTML={{ __html: cleanedHTML }} />
@@ -529,34 +527,31 @@ function SolvePage() {
             {/* Right: Guided panel */}
             <div style={{ 
               padding: 20, 
-              background: "#f7f9fc", 
+              background: "var(--bg-quaternary)", 
               overflow: "auto",
               height: "100%",
               boxSizing: "border-box",
               display: "flex",
-              flexDirection: "column"
+              flexDirection: "column",
+              transition: "var(--transition-normal)"
             }}>
               {showGuide && (
                 <div
+                  className="theme-card"
                   style={{
-                    background: "#fff",
-                    border: "1px solid #e6e9f2",
-                    borderRadius: 12,
-                    padding: 14,
                     marginBottom: 14,
-                    boxShadow: "0 2px 10px rgba(0,0,0,0.04)",
                     flexShrink: 0
                   }}
                 >
-                  <b>How to use this page</b>
-                  <ol style={{ margin: "8px 0 0 18px", color: "#555", fontSize: 14, lineHeight: 1.6 }}>
+                  <b style={{ color: "var(--text-primary)", transition: "var(--transition-normal)" }}>How to use this page</b>
+                  <ol style={{ margin: "8px 0 0 18px", color: "var(--text-secondary)", fontSize: 14, lineHeight: 1.6, transition: "var(--transition-normal)" }}>
                     <li>Select a timer.</li>
                     <li>Record/Type edge cases, then brute force, then optimized + DS.</li>
                     <li>Write optimized code (Tab inserts spaces).</li>
                     <li>Submit → enter time/space complexity → Feedback.</li>
                   </ol>
                   <div style={{ textAlign: "right", marginTop: 8 }}>
-                    <button onClick={dismissGuide} style={{ background: "none", border: "none", color: "#007cf0", cursor: "pointer", fontSize: 13 }}>
+                    <button onClick={dismissGuide} style={{ background: "none", border: "none", color: "var(--accent-primary)", cursor: "pointer", fontSize: 13, transition: "var(--transition-fast)" }}>
                       Got it
                     </button>
                   </div>
@@ -575,24 +570,24 @@ function SolvePage() {
             style={{
               position: "absolute",
               inset: 0,
-              background: "rgba(245, 247, 251, 0.85)",
+              background: "var(--bg-overlay)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               padding: 20,
+              transition: "var(--transition-normal)"
             }}
           >
             <div
+              className="theme-card"
               style={{
                 width: "min(680px, 92vw)",
-                background: "#fff",
-                borderRadius: 12,
-                boxShadow: "0 10px 36px rgba(0,0,0,0.12)",
+                boxShadow: "0 10px 36px var(--shadow-heavy)",
                 padding: 24,
               }}
             >
-              <h2 style={{ marginTop: 0, marginBottom: 6 }}>Select Your Timer</h2>
-              <p style={{ marginTop: 0, color: "#666" }}>
+              <h2 style={{ marginTop: 0, marginBottom: 6, color: "var(--text-primary)", transition: "var(--transition-normal)" }}>Select Your Timer</h2>
+              <p style={{ marginTop: 0, color: "var(--text-tertiary)", transition: "var(--transition-normal)" }}>
                 Pick a duration that matches the company's interview format. You're in control.
               </p>
               <div style={{ display: "flex", gap: 12, flexWrap: "wrap", margin: "14px 0 8px" }}>
@@ -603,10 +598,12 @@ function SolvePage() {
                     style={{
                       padding: "10px 14px",
                       borderRadius: 10,
-                      border: selectedDuration === d.value ? "2px solid #00dfd8" : "1px solid #ccc",
-                      background: "#fff",
+                      border: selectedDuration === d.value ? "2px solid var(--accent-secondary)" : "1px solid var(--border-primary)",
+                      background: "var(--bg-secondary)",
                       cursor: "pointer",
                       fontWeight: selectedDuration === d.value ? 700 : 500,
+                      color: "var(--text-secondary)",
+                      transition: "var(--transition-fast)",
                     }}
                   >
                     {d.label}
@@ -619,12 +616,14 @@ function SolvePage() {
                   style={{
                     padding: "8px 12px",
                     borderRadius: 6,
-                    border: "1px solid #ddd",
-                    background: "#fff",
+                    border: "1px solid var(--border-tertiary)",
+                    background: "var(--bg-secondary)",
                     cursor: "pointer",
                     display: "flex",
                     alignItems: "center",
                     gap: 4,
+                    color: "var(--text-secondary)",
+                    transition: "var(--transition-fast)",
                   }}
                 >
                   <FiArrowLeft size={14} />
@@ -639,27 +638,22 @@ function SolvePage() {
                     }
                   }}
                   disabled={!selectedDuration}
+                  className="theme-button"
                   style={{
                     padding: "10px 16px",
-                    borderRadius: 8,
-                    border: "none",
-                    background: !selectedDuration
-                      ? "linear-gradient(to right, #99bfe9, #a7efe9)"
-                      : "linear-gradient(to right, #007cf0, #00dfd8)",
-                    color: "#fff",
+                    opacity: !selectedDuration ? 0.6 : 1,
                     cursor: selectedDuration ? "pointer" : "not-allowed",
-                    fontWeight: 600,
                   }}
                 >
                   Continue
                 </button>
               </div>
               {!selectedDuration ? (
-                <p style={{ marginTop: 10, fontSize: 13, color: "#999" }}>
+                <p style={{ marginTop: 10, fontSize: 13, color: "var(--text-muted)", transition: "var(--transition-normal)" }}>
                   Please select a duration to continue.
                 </p>
               ) : (
-                <p style={{ marginTop: 10, fontSize: 13, color: "#333" }}>
+                <p style={{ marginTop: 10, fontSize: 13, color: "var(--text-secondary)", transition: "var(--transition-normal)" }}>
                   Timer set to <b>{fmt(selectedDuration)}</b>. Timer will start when you press Continue.
                 </p>
               )}

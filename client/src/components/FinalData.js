@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+
 function FinalData() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,7 +33,7 @@ function FinalData() {
       };
 
       // Send to AI evaluation endpoint
-      const response = await fetch('http://localhost:3001/evaluate-submission-ollama', {
+      const response = await fetch(`${API_URL}/evaluate-submission-ollama`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -58,72 +60,54 @@ function FinalData() {
   };
 
   return (
-    <div className="container">
-      <h1 style={{ textAlign: 'center', marginBottom: 30 }}>
-        <span style={{ fontWeight: 600 }}>DSA</span>
-        <span style={{ background: "linear-gradient(90deg,#007cf0,#00dfd8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-          IntervAI
-        </span>
-      </h1>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 30, fontSize: 14 }}>
+    <div className="container" style={{ paddingBottom: '60px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 30, fontSize: 14, color: 'var(--text-secondary)', transition: 'var(--transition-normal)' }}>
         <span>Time Complexity: <strong>{timeComplexity || '---'}</strong></span>
         <span>Space Complexity: <strong>{spaceComplexity || '---'}</strong></span>
       </div>
 
       <div style={{ marginBottom: 30 }}>
-        <h3 style={{ color: '#555', marginBottom: 15 }}>Edge Cases Considered</h3>
-        <div style={{ 
-          background: '#f8f9fa', 
-          padding: 20, 
-          borderRadius: 8, 
-          border: '1px solid #e9ecef',
+        <h3 style={{ color: 'var(--text-primary)', marginBottom: 15, transition: 'var(--transition-normal)' }}>Edge Cases Considered</h3>
+        <div className="theme-card" style={{ 
           minHeight: 60,
-          color: '#666'
+          color: 'var(--text-secondary)',
+          transition: 'var(--transition-normal)'
         }}>
           {edgeCases || 'No edge cases recorded.'}
         </div>
       </div>
 
       <div style={{ marginBottom: 30 }}>
-        <h3 style={{ color: '#555', marginBottom: 15 }}>Brute Force Approach</h3>
-        <div style={{ 
-          background: '#f8f9fa', 
-          padding: 20, 
-          borderRadius: 8, 
-          border: '1px solid #e9ecef',
+        <h3 style={{ color: 'var(--text-primary)', marginBottom: 15, transition: 'var(--transition-normal)' }}>Brute Force Approach</h3>
+        <div className="theme-card" style={{ 
           minHeight: 60,
-          color: '#666'
+          color: 'var(--text-secondary)',
+          transition: 'var(--transition-normal)'
         }}>
           {bruteForce || 'No brute force explanation recorded.'}
         </div>
       </div>
 
       <div style={{ marginBottom: 30 }}>
-        <h3 style={{ color: '#555', marginBottom: 15 }}>Optimized Solution & Data Structures</h3>
-        <div style={{ 
-          background: '#f8f9fa', 
-          padding: 20, 
-          borderRadius: 8, 
-          border: '1px solid #e9ecef',
+        <h3 style={{ color: 'var(--text-primary)', marginBottom: 15, transition: 'var(--transition-normal)' }}>Optimized Solution & Data Structures</h3>
+        <div className="theme-card" style={{ 
           minHeight: 60,
-          color: '#666'
+          color: 'var(--text-secondary)',
+          transition: 'var(--transition-normal)'
         }}>
           {optimized || 'No optimized solution explanation recorded.'}
         </div>
       </div>
 
       <div style={{ marginBottom: 30 }}>
-        <h3 style={{ color: '#555', marginBottom: 15 }}>Final Code</h3>
-        <div style={{ 
-          background: '#1e1e1e', 
-          color: '#d4d4d4',
-          padding: 20, 
-          borderRadius: 8,
+        <h3 style={{ color: 'var(--text-primary)', marginBottom: 15, transition: 'var(--transition-normal)' }}>Final Code</h3>
+        <div className="theme-card" style={{ 
           fontFamily: 'monospace',
           fontSize: 14,
           minHeight: 100,
-          whiteSpace: 'pre-wrap'
+          whiteSpace: 'pre-wrap',
+          color: 'var(--text-secondary)',
+          transition: 'var(--transition-normal)'
         }}>
           {userCode || '// No code submitted.'}
         </div>
@@ -133,18 +117,20 @@ function FinalData() {
         display: 'flex', 
         justifyContent: 'center', 
         gap: 15,
-        marginTop: 40 
+        marginTop: 40,
+        marginBottom: 40
       }}>
         <button
           onClick={() => navigate('/solve')}
           style={{
             padding: '12px 24px',
             borderRadius: 8,
-            border: '1px solid #ddd',
-            background: '#fff',
-            color: '#555',
+            border: '1px solid var(--border-tertiary)',
+            background: 'var(--bg-secondary)',
+            color: 'var(--text-secondary)',
             cursor: 'pointer',
             fontWeight: 500,
+            transition: 'var(--transition-fast)',
           }}
         >
           Back to Practice
@@ -153,20 +139,15 @@ function FinalData() {
         <button
           onClick={handleSubmit}
           disabled={isSubmitting}
+          className="theme-button"
           style={{
             padding: '12px 32px',
-            borderRadius: 8,
-            border: 'none',
-            background: isSubmitting 
-              ? 'linear-gradient(to right, #99bfe9, #a7efe9)' 
-              : 'linear-gradient(to right, #007cf0, #00dfd8)',
-            color: '#fff',
-            cursor: isSubmitting ? 'not-allowed' : 'pointer',
-            fontWeight: 600,
             fontSize: 16,
+            opacity: isSubmitting ? 0.6 : 1,
+            cursor: isSubmitting ? 'not-allowed' : 'pointer',
           }}
         >
-          {isSubmitting ? 'Evaluating...' : 'Submit for AI Analysis'}
+          {isSubmitting ? 'Evaluating...' : 'Get Feedback'}
         </button>
       </div>
     </div>
