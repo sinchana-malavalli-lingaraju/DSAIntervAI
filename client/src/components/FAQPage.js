@@ -7,7 +7,6 @@ import {
   MdAccountCircle, 
   MdSettings,
   MdSecurity,
-  MdSpeed,
   MdQuestionAnswer
 } from 'react-icons/md';
 

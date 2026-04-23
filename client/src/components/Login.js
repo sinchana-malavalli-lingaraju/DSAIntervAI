@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { FiEye, FiEyeOff, FiMail, FiLock, FiUser } from 'react-icons/fi';
+import { FiEye, FiEyeOff, FiMail, FiLock } from 'react-icons/fi';
 import './Auth.css';
 
 const Login = () => {

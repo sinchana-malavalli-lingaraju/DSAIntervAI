@@ -159,39 +159,6 @@ const InterviewTipsPage = () => {
     }
   ];
 
-  const commonQuestions = [
-    {
-      category: 'Technical',
-      questions: [
-        "Explain your approach to solving this problem.",
-        "What's the time and space complexity of your solution?",
-        "How would you optimize this further?",
-        "What edge cases should we consider?",
-        "How would you test this code?"
-      ]
-    },
-    {
-      category: 'Behavioral',
-      questions: [
-        "Tell me about a challenging project you worked on.",
-        "Describe a time when you had to learn something new quickly.",
-        "How do you handle disagreements with team members?",
-        "Tell me about a time you failed and what you learned.",
-        "Why do you want to work at this company?"
-      ]
-    },
-    {
-      category: 'System Design',
-      questions: [
-        "How would you design a URL shortener?",
-        "Design a chat application like WhatsApp.",
-        "How would you scale a social media platform?",
-        "Design a recommendation system.",
-        "How would you handle high traffic on your website?"
-      ]
-    }
-  ];
-
   return (
     <div style={{ 
       maxWidth: '1200px', 
