@@ -22,3 +22,10 @@ Thumbs.db
 # Python
 .venv/
 __pycache__/
+
+# Claude Code
+.claude/
+
+# Dev notes
+commands_to_run.txt
+AUTHENTICATION.md
