@@ -2,8 +2,6 @@
 
 A DSA interview preparation platform that simulates real coding interviews. Pick a company, get a LeetCode problem, think out loud, write your solution, and receive AI-powered feedback — just like a real interview.
 
-**Live:** https://dsa-interv-ai.vercel.app
-
 ---
 
 ## Features
